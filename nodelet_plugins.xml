@@ -1,0 +1,7 @@
+<library path="lib/libpointcloud_accumulator">
+    <class name="pointcloud_accumulator/PointcloudAccumulatorNodelet" type="pointcloud_accumulator::PointcloudAccumulatorNodelet" base_class_type="nodelet::Nodelet">
+        <description>
+            Nodelet to build an ikd-Tree from incoming PointCloud2 messages.
+        </description>
+    </class>
+</library>

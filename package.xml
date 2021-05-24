@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>pointcloud_accumulator</name>
+  <version>0.0.0</version>
+  <description>The pointcloud_accumulator package</description>
+
+  <maintainer email="jasper@todo.todo">jasper</maintainer>
+
+  <license>TODO</license>
+  <!-- <author email="jane.doe@example.com">Jane Doe</author> -->
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>filters</build_depend>
+  <build_depend>nodelet</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_export_depend>filters</build_export_depend>
+  <build_export_depend>nodelet</build_export_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>sensor_msgs</build_export_depend>
+  <exec_depend>filters</exec_depend>
+  <exec_depend>nodelet</exec_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <depend>rviz</depend>
+  <depend>pcl_ros</depend>
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <nodelet plugin="${prefix}/nodelet_plugins.xml" />
+  </export>
+</package>
