@@ -48,6 +48,7 @@ set(SRC_FILES
         src/pointcloud_accumulator.cpp
         src/ikd_Tree.cpp
         src/pointcloud_accumulator_nodelet.cpp
+        src/pointcloud_accumulator_node.cpp
         )
 
 add_library(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})

@@ -14,7 +14,7 @@ PointcloudAccumulator::PointcloudAccumulator(const ros::NodeHandle& nh, const ro
 
 void PointcloudAccumulator::init(){
 
-    kd_tree = new KD_TREE(0.3, 0.6, 0.15);
+    kd_tree = new KD_TREE(0.3, 0.6, 0.1);
     sub = nh_.subscribe<sensor_msgs::PointCloud2>("cloud_in", 100, &PointcloudAccumulator::callback, this);
     pub = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB>>("cloud_out", 100, false);
 
@@ -24,18 +24,19 @@ void PointcloudAccumulator::init(){
     pt.x = 0; pt.y = 0; pt.z = 0;
     p.push_back(pt);
     kd_tree->Build(p);
+    counter = 0;
 
     }
 
 void PointcloudAccumulator::callback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 
     //TODO Transformation into some static frame required because time information is lost
-    if(!tfBuffer.canTransform("world", msg->header.frame_id, msg->header.stamp, ros::Duration(0.01))){
+    if(!tfBuffer.canTransform("odom", msg->header.frame_id, msg->header.stamp, ros::Duration(0.01))){
         ROS_INFO("Can't transform!");
         return;
     }
     sensor_msgs::PointCloud2Ptr cloud(new sensor_msgs::PointCloud2);
-    pcl_ros::transformPointCloud("world", *msg, *cloud, tfBuffer);
+    pcl_ros::transformPointCloud("odom", *msg, *cloud, tfBuffer);
 
     //Transmit point cloud data to the ikd-tree
     int32_t xi = rviz::findChannelIndex(msg, "x");
@@ -66,6 +67,8 @@ void PointcloudAccumulator::callback(const sensor_msgs::PointCloud2::ConstPtr& m
 
     ROS_INFO("Added %ld Points to the ikd-tree", points.size());
     kd_tree->Add_Points(points, true);
+    counter = counter + points.size();
+    ROS_INFO("Total points received %ld", counter);
 
     }
 
@@ -77,7 +80,7 @@ void PointcloudAccumulator::publish_pointcloud(){
 
     sensor_msgs::PointCloud2Ptr msg(new sensor_msgs::PointCloud2);
     msg->header.stamp = ros::Time::now();
-    msg->header.frame_id = "world";
+    msg->header.frame_id = "odom";
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     cloud->width = points.size();
@@ -87,7 +90,6 @@ void PointcloudAccumulator::publish_pointcloud(){
     for (size_t i = 0; i < points.size(); i++) {
         cloud->points.push_back(points[i]);
     }
-
     pub.publish(cloud);
 }
 }
