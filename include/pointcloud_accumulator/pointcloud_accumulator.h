@@ -18,6 +18,8 @@ namespace pointcloud_accumulator
 
     private:
         void callback(const sensor_msgs::PointCloud2::ConstPtr& msg);
+        std::string static_frame;
+        double downsample_resolution;
 
         ros::NodeHandle nh_;
         ros::NodeHandle pnh_;

@@ -4,13 +4,18 @@
 
   <arg name="cloud_in" default="/colored_cloud" />
   <arg name="cloud_out" default="/pointcloud_accumulated" />
+  <arg name="nodelet_manager" default="velodyne_nodelet_manager" />
+  <arg name="resolution" default="0.1" />
+  <arg name="frame" default="world" />
   
   <node pkg="nodelet" type="nodelet" name="pointcloud_accumulator_nodelet"
-        args="load pointcloud_accumulator/PointcloudAccumulatorNodelet velodyne_nodelet_manager" 
+        args="load pointcloud_accumulator/PointcloudAccumulatorNodelet $(arg nodelet_manager)" 
         output="screen" respawn="true" >
 
     <remap from="cloud_in" to="$(arg cloud_in)" />
     <remap from="cloud_out" to="$(arg cloud_out)" />
+    <param name="downsample_resolution" value="$(arg resolution)" />
+    <param name="static_frame" value="$(arg frame)" />
     
   </node>
   
