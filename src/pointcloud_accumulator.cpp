@@ -11,7 +11,6 @@ namespace pointcloud_accumulator
 PointcloudAccumulator::PointcloudAccumulator(const ros::NodeHandle& nh, const ros::NodeHandle& pnh) : nh_(nh), pnh_(pnh), tfListener(tfBuffer){
     pnh.param<double>("downsample_resolution", downsample_resolution, 0.1);
     pnh.param<std::string>("static_frame", static_frame, "odom");
-    ROS_INFO("%s", static_frame.c_str());
 }
 
 void PointcloudAccumulator::init(){
@@ -26,14 +25,12 @@ void PointcloudAccumulator::init(){
     pt.x = 0; pt.y = 0; pt.z = 0;
     p.push_back(pt);
     kd_tree->Build(p);
-    counter = 0;
-
     }
 
 void PointcloudAccumulator::callback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 
     if(!tfBuffer.canTransform(static_frame, msg->header.frame_id, msg->header.stamp, ros::Duration(0.01))){
-        ROS_INFO("Can't transform!");
+        ROS_DEBUG("Can't transform from %s to %s!", msg->header.frame_id.c_str(), static_frame.c_str());
         return;
     }
     sensor_msgs::PointCloud2Ptr cloud(new sensor_msgs::PointCloud2);
@@ -66,18 +63,14 @@ void PointcloudAccumulator::callback(const sensor_msgs::PointCloud2::ConstPtr& m
         points.push_back(p);
     }
 
-    ROS_INFO("Added %ld points to the ikd-tree", points.size());
     kd_tree->Add_Points(points, true);
-    counter = counter + points.size();
 
     }
 
 void PointcloudAccumulator::publish_pointcloud(){
 
     PointVector points;
-    kd_tree->flatten(kd_tree->Root_Node, points);
-    ROS_INFO("ikd-tree size %ld", points.size());
-    ROS_INFO("Total points received %ld", counter);
+    kd_tree->flatten(kd_tree->Root_Node, points, NOT_RECORD);
 
     sensor_msgs::PointCloud2Ptr msg(new sensor_msgs::PointCloud2);
     msg->header.stamp = ros::Time::now();

@@ -27,8 +27,6 @@ namespace pointcloud_accumulator
         ros::Publisher pub;
         ros::Subscriber sub;
 
-        int counter;
-
         KD_TREE* kd_tree;
         tf2_ros::Buffer tfBuffer;
         tf2_ros::TransformListener tfListener;
