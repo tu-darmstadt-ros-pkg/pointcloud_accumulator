@@ -16,10 +16,13 @@ PointcloudAccumulator::PointcloudAccumulator(const ros::NodeHandle& nh, const ro
 void PointcloudAccumulator::init(){
 
     kd_tree = new KD_TREE(0.3, 0.6, downsample_resolution);
+
     sub = nh_.subscribe<sensor_msgs::PointCloud2>("cloud_in", 1, &PointcloudAccumulator::callback, this);
     pub = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB>>("cloud_out", 1, false);
 
-    //TODO Build initial tree with some more sophisticated method than some dummy point/empty point
+    save_map_service = pnh_.advertiseService("save_pointcloud", &PointcloudAccumulator::savePointcloud, this);
+    reset_map_service = pnh_.advertiseService("reset_pointcloud", &PointcloudAccumulator::resetPointcloud, this);
+
     PointVector p;
     PointType pt;
     pt.x = 0; pt.y = 0; pt.z = 0;
@@ -86,4 +89,49 @@ void PointcloudAccumulator::publish_pointcloud(){
     }
     pub.publish(cloud);
 }
+
+bool PointcloudAccumulator::savePointcloud(pointcloud_accumulator_msgs::SavePointCloud::Request  &req,
+                                               pointcloud_accumulator_msgs::SavePointCloud::Response &res){
+    PointVector points;
+    kd_tree->flatten(kd_tree->Root_Node, points, NOT_RECORD);
+
+    sensor_msgs::PointCloud2Ptr msg(new sensor_msgs::PointCloud2);
+    msg->header.stamp = ros::Time::now();
+    msg->header.frame_id = static_frame;
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    cloud->height = 1;
+    pcl_conversions::toPCL(msg->header, cloud->header);
+    cloud->is_dense = true;
+    cloud->width = points.size();
+
+    for (size_t i = 0; i < points.size(); i++) {
+        cloud->points.push_back(points[i]);
+    }
+
+    std::string file_name = req.file_path + "/" + req.file_name + ".pcd";
+    pcl::PCLPointCloud2::Ptr cloud2(new pcl::PCLPointCloud2);
+
+    pcl::toPCLPointCloud2(*cloud, *cloud2);
+    pcl::io::savePCDFile(file_name, *cloud2);
+    ROS_INFO("Saved Point Cloud");
+    res.success = true;
+    return true;
+}
+
+    bool PointcloudAccumulator::resetPointcloud(std_srvs::Trigger::Request  &req,
+                                                std_srvs::Trigger::Response &res){
+
+        kd_tree = new KD_TREE(0.3, 0.6, downsample_resolution);
+
+        PointVector p;
+        PointType pt;
+        pt.x = 0; pt.y = 0; pt.z = 0;
+        p.push_back(pt);
+        kd_tree->Build(p);
+        ROS_INFO("Reset Point Cloud");
+        res.success = true;
+        return true;
+    }
+
 }

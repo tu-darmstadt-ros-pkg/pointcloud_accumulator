@@ -24,6 +24,9 @@
   <exec_depend>sensor_msgs</exec_depend>
   <depend>rviz</depend>
   <depend>pcl_ros</depend>
+  <depend>pointcloud_accumulator_msgs</depend>
+
+
 
 
   <!-- The export tag contains other, unspecified, tags -->

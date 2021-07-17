@@ -9,14 +9,16 @@ find_package(catkin REQUIRED COMPONENTS
         roscpp
         sensor_msgs
         rviz
-        pcl_ros)
+        pcl_ros
+        pointcloud_accumulator_msgs
+        )
 
 find_package(PCL REQUIRED)
 
 catkin_package(
         INCLUDE_DIRS include
         LIBRARIES pointcloud_accumulator
-        CATKIN_DEPENDS filters nodelet roscpp sensor_msgs rviz
+        CATKIN_DEPENDS filters nodelet roscpp sensor_msgs rviz pointcloud_accumulator_msgs
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
