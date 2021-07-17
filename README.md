@@ -1,15 +1,43 @@
 # Point Cloud Accumulator
+## Overview
 Nodelet to build an ikd-Tree from incoming PointCloud messages to build a downsampled cloud of the environment.
 
+## Install
 To install just clone
-
-```git clone git@git.sim.informatik.tu-darmstadt.de:hector/pointcloud_accumulator.git```
-
+```
+git clone git@git.sim.informatik.tu-darmstadt.de:hector/pointcloud_accumulator.git
+```
 and build
+```
+hector make pointcloud_accumulator
+```
 
-```hector make pointcloud_accumulator```
+## Parameters
+In `pointcloud_accumulator/launch/accumulator.launch` several parameters can be set:
+* **`cloud_in`** The input point cloud topic.
+* **`cloud_out`** The topic where the downsampled cloud gets published.
+* **`nodelet_manager`** Nodelet manager for the point cloud topic.
+* **`resolution`** The resolution with which the tree gets downsampled, i.e. the length of one voxel.
+* **`frame`** The *static* tf frame into which all points get transformed.
+* **`update_rate`** The rate (in Hz) with which the cloud gets published.
 
-After that, set the appropriate input cloud and the nodelet manager in launch/accumulator.launch. The static frame into which all points of the tree are transformed can be set via `static_frame`, the resolution of the tree, i.e. the length of one voxel, can be set via `downsample_resolution`.
-Then launch using
+## Services
+* **`save_pointcloud`** Saves the current state of the point cloud as a `.pcd`-file. Call the service with 
+```
+rosservice call /pointcloud_accumulator_nodelet/save_pointcloud "<file_path>" "<file_name>"
+```
+For example
+```
+rosservice call /pointcloud_accumulator_nodelet/save_pointcloud "$(rospack find pointcloud_accumulator)/saved_clouds" "pc1"
+```
+
+* **`reset_pointcloud`** Resets the accumulated point cloud. Call the service with 
+```
+rosservice call /pointcloud_accumulator_nodelet/reset_pointcloud
+```
+
+## Launch
+Launch the nodelet using
 
 ```roslaunch pointcloud_accumulator accumulator.launch```
+

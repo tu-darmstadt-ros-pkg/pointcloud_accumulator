@@ -7,6 +7,7 @@
   <arg name="nodelet_manager" default="velodyne_nodelet_manager" />
   <arg name="resolution" default="0.1" />
   <arg name="frame" default="world" />
+  <arg name="update_rate" default="0.5" />
   
   <node pkg="nodelet" type="nodelet" name="pointcloud_accumulator_nodelet"
         args="load pointcloud_accumulator/PointcloudAccumulatorNodelet $(arg nodelet_manager)" 
@@ -16,7 +17,7 @@
     <remap from="cloud_out" to="$(arg cloud_out)" />
     <param name="downsample_resolution" value="$(arg resolution)" />
     <param name="static_frame" value="$(arg frame)" />
-    
+    <param name="update_rate" value="$(arg update_rate)" />
   </node>
   
 </launch>
