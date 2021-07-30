@@ -4,11 +4,18 @@
 
   <arg name="cloud_in" default="/colored_cloud" />
   <arg name="cloud_out" default="/pointcloud_accumulated" />
+  <arg name="resolution" default="0.1" />
+  <arg name="frame" default="world" />
+  <arg name="update_rate" default="0.5" />
+  
   
   <node pkg="pointcloud_accumulator" type="pointcloud_accumulator_node" name="pointcloud_accumulator_node"
         output="screen" respawn="true" >
     <remap from="cloud_in" to="$(arg cloud_in)" />
     <remap from="cloud_out" to="$(arg cloud_out)" />
+    <param name="downsample_resolution" value="$(arg resolution)" />
+    <param name="static_frame" value="$(arg frame)" />
+    <param name="update_rate" value="$(arg update_rate)" />
   </node>
   
 </launch>

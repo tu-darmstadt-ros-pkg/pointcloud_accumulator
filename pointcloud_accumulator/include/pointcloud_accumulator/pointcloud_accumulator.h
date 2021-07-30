@@ -23,9 +23,12 @@ namespace pointcloud_accumulator
                             pointcloud_accumulator_msgs::SavePointCloud::Response &res);
         bool resetPointcloud(std_srvs::Trigger::Request  &req,
                              std_srvs::Trigger::Response &res);
+        int calculate_adaptive_increment(double add_duration, int adaptive_param);
 
         std::string static_frame;
         double downsample_resolution;
+        double add_duration;
+        int adaptive_incr;
 
         ros::NodeHandle nh_;
         ros::NodeHandle pnh_;

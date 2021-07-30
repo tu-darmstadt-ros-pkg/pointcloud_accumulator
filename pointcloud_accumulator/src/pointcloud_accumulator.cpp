@@ -11,6 +11,9 @@ namespace pointcloud_accumulator
 PointcloudAccumulator::PointcloudAccumulator(const ros::NodeHandle& nh, const ros::NodeHandle& pnh) : nh_(nh), pnh_(pnh), tfListener(tfBuffer){
     pnh.param<double>("downsample_resolution", downsample_resolution, 0.1);
     pnh.param<std::string>("static_frame", static_frame, "odom");
+
+    add_duration = 1.0;
+    adaptive_incr = 2;
 }
 
 void PointcloudAccumulator::init(){
@@ -56,7 +59,9 @@ void PointcloudAccumulator::callback(const sensor_msgs::PointCloud2::ConstPtr& m
 
     PointVector points;
 
-    for(size_t i = 0; i < cloud->width*msg->height; i++){
+    adaptive_incr = calculate_adaptive_increment(add_duration, adaptive_incr);
+
+    for(size_t i = 0; i < cloud->width*msg->height; i = i + adaptive_incr){
         PointType p;
         p.x = rviz::valueFromCloud<float>(cloud, xoff, type, point_step, i);
         p.y = rviz::valueFromCloud<float>(cloud, yoff, type, point_step, i);
@@ -132,6 +137,15 @@ bool PointcloudAccumulator::savePointcloud(pointcloud_accumulator_msgs::SavePoin
         ROS_INFO("Reset Point Cloud");
         res.success = true;
         return true;
+    }
+
+    int PointcloudAccumulator::calculate_adaptive_increment(double add_duration, int adaptive_param){
+        int incr = 0.5 * adaptive_param * (add_duration + 1);
+        if (incr >= 1){
+            return incr;
+        } else{
+            return 1;
+        }
     }
 
 }
