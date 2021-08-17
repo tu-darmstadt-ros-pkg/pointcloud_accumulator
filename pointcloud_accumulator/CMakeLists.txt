@@ -11,6 +11,9 @@ find_package(catkin REQUIRED COMPONENTS
         rviz
         pcl_ros
         pointcloud_accumulator_msgs
+        cartographer_ros_msgs
+        geometry_msgs
+        tf2_geometry_msgs
         )
 
 find_package(PCL REQUIRED)
@@ -18,7 +21,7 @@ find_package(PCL REQUIRED)
 catkin_package(
         INCLUDE_DIRS include
         LIBRARIES pointcloud_accumulator
-        CATKIN_DEPENDS filters nodelet roscpp sensor_msgs rviz pointcloud_accumulator_msgs
+        CATKIN_DEPENDS filters nodelet roscpp sensor_msgs rviz pointcloud_accumulator_msgs cartographer_ros_msgs geometry_msgs tf2_geometry_msgs
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
@@ -43,7 +46,7 @@ add_definitions(-DQT_NO_KEYWORDS)
 set(HEADER_FILES
         include/pointcloud_accumulator/pointcloud_accumulator.h
         include/pointcloud_accumulator/ikd_Tree.h
-
+        include/pointcloud_accumulator/PointXYZRGBT.h
         )
 
 set(SRC_FILES

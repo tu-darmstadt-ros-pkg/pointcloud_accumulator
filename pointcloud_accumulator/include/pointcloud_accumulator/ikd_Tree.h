@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <memory.h>
 #include <pcl_ros/point_cloud.h>
+#include <pointcloud_accumulator/PointXYZRGBT.h>
 
 
 #define EPSS 1e-6
@@ -20,9 +21,7 @@
 
 using namespace std;
 
-typedef pcl::PointXYZRGB PointType;
-typedef vector<PointType> PointVector;
-
+typedef PointXYZRGBT PointType;
 
 typedef vector<PointType> PointVector;
 

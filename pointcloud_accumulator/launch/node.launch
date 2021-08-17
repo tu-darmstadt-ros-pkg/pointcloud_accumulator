@@ -7,7 +7,7 @@
   <arg name="resolution" default="0.1" />
   <arg name="frame" default="world" />
   <arg name="update_rate" default="0.5" />
-  
+  <arg name="use_cartographer_submaps" default="false" />
   
   <node pkg="pointcloud_accumulator" type="pointcloud_accumulator_node" name="pointcloud_accumulator_node"
         output="screen" respawn="true" >
@@ -16,6 +16,7 @@
     <param name="downsample_resolution" value="$(arg resolution)" />
     <param name="static_frame" value="$(arg frame)" />
     <param name="update_rate" value="$(arg update_rate)" />
+    <param name="use_cartographer_submaps" value="$(arg use_cartographer_submaps)" />
   </node>
   
 </launch>

@@ -25,7 +25,9 @@
   <depend>rviz</depend>
   <depend>pcl_ros</depend>
   <depend>pointcloud_accumulator_msgs</depend>
-
+  <depend>cartographer_ros_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2_geometry_msgs</depend>
 
 
 

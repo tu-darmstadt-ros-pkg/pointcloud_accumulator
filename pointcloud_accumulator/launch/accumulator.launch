@@ -8,7 +8,8 @@
   <arg name="resolution" default="0.1" />
   <arg name="frame" default="world" />
   <arg name="update_rate" default="0.5" />
-  
+  <arg name="use_cartographer_submaps" default="true" />
+    
   <node pkg="nodelet" type="nodelet" name="pointcloud_accumulator_nodelet"
         args="load pointcloud_accumulator/PointcloudAccumulatorNodelet $(arg nodelet_manager)" 
         output="screen" respawn="true" >
@@ -18,6 +19,7 @@
     <param name="downsample_resolution" value="$(arg resolution)" />
     <param name="static_frame" value="$(arg frame)" />
     <param name="update_rate" value="$(arg update_rate)" />
+    <param name="use_cartographer_submaps" value="$(arg use_cartographer_submaps)" />
   </node>
   
 </launch>

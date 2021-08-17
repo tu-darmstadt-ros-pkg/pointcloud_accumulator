@@ -6,6 +6,9 @@
 #include <pointcloud_accumulator/ikd_Tree.h>
 #include <pointcloud_accumulator_msgs/SavePointCloud.h>
 #include <std_srvs/Trigger.h>
+#include <cartographer_ros_msgs/SubmapList.h>
+#include <cartographer_ros_msgs/StampedSubmapEntry.h>
+
 
 namespace pointcloud_accumulator
 {
@@ -23,18 +26,26 @@ namespace pointcloud_accumulator
                             pointcloud_accumulator_msgs::SavePointCloud::Response &res);
         bool resetPointcloud(std_srvs::Trigger::Request  &req,
                              std_srvs::Trigger::Response &res);
+        bool reset();
         int calculate_adaptive_increment(double add_duration, int adaptive_param);
+        void submap_announcements(const cartographer_ros_msgs::StampedSubmapEntry::ConstPtr& msg);
+        void submap_update(const cartographer_ros_msgs::SubmapList::ConstPtr& msg);
 
         std::string static_frame;
         double downsample_resolution;
+        bool use_submaps;
         double add_duration;
         int adaptive_incr;
+        std::vector<cartographer_ros_msgs::StampedSubmapEntry> submap_list;
 
         ros::NodeHandle nh_;
         ros::NodeHandle pnh_;
 
         ros::Publisher pub;
         ros::Subscriber sub;
+        ros::Subscriber submap_announcement_sub;
+        ros::Subscriber submap_update_sub;
+
         ros::ServiceServer save_map_service;
         ros::ServiceServer reset_map_service;
 
