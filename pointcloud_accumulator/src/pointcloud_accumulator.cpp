@@ -5,6 +5,7 @@
 #include <pcl_ros/transforms.h>
 #include <geometry_msgs/PointStamped.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/LinearMath/Transform.h>
 
 namespace pointcloud_accumulator
 {
@@ -56,26 +57,31 @@ void PointcloudAccumulator::callback(const sensor_msgs::PointCloud2::ConstPtr& m
 
     const uint8_t type = msg->fields[xi].datatype;
     const uint32_t point_step = msg->point_step;
+
     PointVector points;
 
     adaptive_incr = calculate_adaptive_increment(add_duration, adaptive_incr);
 
     for(size_t i = 0; i < cloud->width*msg->height; i = i + adaptive_incr){
         PointType p;
-        p.x = rviz::valueFromCloud<float>(cloud, xoff, type, point_step, i);
-        p.y = rviz::valueFromCloud<float>(cloud, yoff, type, point_step, i);
-        p.z = rviz::valueFromCloud<float>(cloud, zoff, type, point_step, i);
+        float x = rviz::valueFromCloud<float>(cloud, xoff, type, point_step, i);
 
-        if(rgbi == -1){
-            p.r = 255;
-            p.b = 255;
-            p.g = 255;
-        }else{
-            p.rgb = rviz::valueFromCloud<float>(cloud, rgboff, type, point_step, i);
+        if(!std::isnan(x) && x != 0.0) {
+            p.x = x;
+            p.y = rviz::valueFromCloud<float>(cloud, yoff, type, point_step, i);
+            p.z = rviz::valueFromCloud<float>(cloud, zoff, type, point_step, i);
+
+            if (rgbi == -1) {
+                p.r = 255;
+                p.b = 255;
+                p.g = 255;
+            } else {
+                p.rgb = rviz::valueFromCloud<float>(cloud, rgboff, type, point_step, i);
+            }
+            p.stamp = msg->header.stamp;
+
+            points.push_back(p);
         }
-        p.stamp = msg->header.stamp;
-
-        points.push_back(p);
     }
     auto t1 = ros::Time::now().toSec();
     kd_tree->Add_Points(points, true);
@@ -85,47 +91,82 @@ void PointcloudAccumulator::callback(const sensor_msgs::PointCloud2::ConstPtr& m
 
 void PointcloudAccumulator::submap_announcements(const cartographer_ros_msgs::StampedSubmapEntry::ConstPtr& msg){
 
-        submap_list.push_back(*msg);
+    submap_list.push_back(*msg);
     }
 
 void PointcloudAccumulator::submap_update(const cartographer_ros_msgs::SubmapList::ConstPtr& msg){
 
-        for(int i = 0; i < msg->submap.size(); i++){
-            //Check whether pose of submap changed
-            if(msg->submap[i].pose != submap_list[i].submap.pose){
+        PointVector points;
+        kd_tree->flatten(kd_tree->Root_Node, points, NOT_RECORD);
 
-                std::string submap = "submap_" + std::to_string(i);
-                PointVector points;
+        for(size_t submap_index = 0; submap_index < msg->submap.size(); submap_index++){
+            int internal_index = -1;
+            for(size_t j = 0; j < submap_list.size(); j++){
+                if(submap_list[j].submap.submap_index == submap_index){
+                    internal_index = j;
+                    break;
+                }
+            }
+            if(internal_index == -1){
+                continue;
+            }
+
+            geometry_msgs::Pose old_submap = submap_list[internal_index].submap.pose;
+            geometry_msgs::Pose new_submap = msg->submap[submap_index].pose;
+
+            //Check whether pose of submap changed substantially
+            if(sqrt(pow(old_submap.position.x - new_submap.position.x, 2)
+                    + pow(old_submap.position.y - new_submap.position.y, 2)
+                    + pow(old_submap.position.z - new_submap.position.z, 2)
+                    + pow(old_submap.orientation.x - new_submap.orientation.x, 2)
+                    + pow(old_submap.orientation.y - new_submap.orientation.y, 2)
+                    + pow(old_submap.orientation.z - new_submap.orientation.z, 2)
+                    + pow(old_submap.orientation.w - new_submap.orientation.w, 2)) > 0.1){
+
+                std::string submap = "submap_" + std::to_string(submap_index);
+
+                //Create transform between world, old submap pose and new pose
+                //Transform world -> old pose
+                tf2::Transform world_old;
+                geometry_msgs::TransformStamped t_world_old;
+                tf2::fromMsg(old_submap, world_old);
+                t_world_old.transform = tf2::toMsg(world_old);
+
+                //Transform new pose -> world
+                tf2::Transform world_new;
+                geometry_msgs::TransformStamped t_new_world;
+                tf2::fromMsg(new_submap, world_new);
+                t_new_world.transform = tf2::toMsg(world_new.inverse());
+
                 PointVector submap_points;
-                kd_tree->flatten(kd_tree->Root_Node, points, NOT_RECORD);
+
                 //Extract points belonging to submap_i
                 for (PointVector::iterator it = points.begin() ; it != points.end(); ++it){
-                    if(it->stamp > submap_list[i].header.stamp && (i == submap_list.size() - 1 || it->stamp < submap_list[i+1].header.stamp)){
+                    if(it->stamp > submap_list[internal_index].header.stamp &&
+                            (internal_index == submap_list.size() - 1 || it->stamp < submap_list[internal_index+1].header.stamp)){
                         submap_points.push_back(*it);
                     }
                 }
-                //Timestamp of old transform
-                ros::Time old = ros::Time::now() - ros::Duration(3.0);
-                if(tfBuffer.canTransform(submap, static_frame, old, ros::Duration(0.1))){
 
-                    kd_tree->Delete_Points(submap_points);
+                kd_tree->Delete_Points(submap_points);
 
-                    //Shift points to the updated submap frame
-                    for (PointVector::iterator it = submap_points.begin() ; it != submap_points.end() ; ++it){
-                        geometry_msgs::PointStamped p;
-                        p.point.x = it->x;
-                        p.point.y = it->y;
-                        p.point.z = it->z;
-                        p.header.frame_id = static_frame;
-                        tfBuffer.transform(p, p, submap, old, static_frame);
-                        tfBuffer.transform(p, p, static_frame, ros::Time(0), static_frame);
-                        it->x = p.point.x;
-                        it->y = p.point.y;
-                        it->z = p.point.z;
-                    }
-                    kd_tree->Add_Points(submap_points, true);
-                    submap_list[i].submap = msg->submap[i];
+                //Shift points to the updated submap frame
+                for (PointVector::iterator it = submap_points.begin() ; it != submap_points.end() ; ++it){
+                    geometry_msgs::Point p;
+                    p.x = it->x;
+                    p.y = it->y;
+                    p.z = it->z;
+
+                    tf2::doTransform(p, p, t_world_old);
+                    tf2::doTransform(p, p, t_new_world);
+
+                    it->x = p.x;
+                    it->y = p.y;
+                    it->z = p.z;
                 }
+
+                kd_tree->Add_Points(submap_points, true);
+                submap_list[internal_index].submap = msg->submap[submap_index];
             }
         }
     }
@@ -133,42 +174,36 @@ void PointcloudAccumulator::submap_update(const cartographer_ros_msgs::SubmapLis
 
 void PointcloudAccumulator::publish_pointcloud(){
 
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     PointVector points;
     kd_tree->flatten(kd_tree->Root_Node, points, NOT_RECORD);
+
+    constructPclCloud(points, cloud);
+    pub.publish(cloud);
+}
+
+void PointcloudAccumulator::constructPclCloud(PointVector points, pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud){
 
     sensor_msgs::PointCloud2Ptr msg(new sensor_msgs::PointCloud2);
     msg->header.stamp = ros::Time::now();
     msg->header.frame_id = static_frame;
 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     cloud->width = points.size();
     cloud->height = 1;
     pcl_conversions::toPCL(msg->header, cloud->header);
-    cloud->is_dense = true;
+    cloud->is_dense = false;
     for (size_t i = 0; i < points.size(); i++) {
         cloud->points.push_back(points[i]);
     }
-    pub.publish(cloud);
 }
 
 bool PointcloudAccumulator::savePointcloud(pointcloud_accumulator_msgs::SavePointCloud::Request  &req,
                                                pointcloud_accumulator_msgs::SavePointCloud::Response &res){
-    PointVector points;
-    kd_tree->flatten(kd_tree->Root_Node, points, NOT_RECORD);
-
-    sensor_msgs::PointCloud2Ptr msg(new sensor_msgs::PointCloud2);
-    msg->header.stamp = ros::Time::now();
-    msg->header.frame_id = static_frame;
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-    cloud->height = 1;
-    pcl_conversions::toPCL(msg->header, cloud->header);
-    cloud->is_dense = true;
-    cloud->width = points.size();
-
-    for (size_t i = 0; i < points.size(); i++) {
-        cloud->points.push_back(points[i]);
-    }
+    PointVector points;
+    kd_tree->flatten(kd_tree->Root_Node, points, NOT_RECORD);
+    constructPclCloud(points, cloud);
 
     std::string file_name = req.file_path + "/" + req.file_name + ".pcd";
     pcl::PCLPointCloud2::Ptr cloud2(new pcl::PCLPointCloud2);
@@ -177,34 +212,33 @@ bool PointcloudAccumulator::savePointcloud(pointcloud_accumulator_msgs::SavePoin
     pcl::io::savePCDFile(file_name, *cloud2);
     ROS_INFO("Saved Point Cloud");
     res.success = true;
+    return res.success;
+}
+
+bool PointcloudAccumulator::resetPointcloud(std_srvs::Trigger::Request  &req,
+                                                std_srvs::Trigger::Response &res){
+    res.success = reset();
+    ROS_INFO("Reset Point Cloud");
+    return res.success;
+}
+
+bool PointcloudAccumulator::reset(){
+    kd_tree = new KD_TREE(0.01, 0.52, downsample_resolution);
+
+    PointVector p;
+    PointType pt;
+    pt.x = 0; pt.y = 0; pt.z = 0;
+    p.push_back(pt);
+    kd_tree->Build(p);
     return true;
 }
 
-    bool PointcloudAccumulator::resetPointcloud(std_srvs::Trigger::Request  &req,
-                                                std_srvs::Trigger::Response &res){
-        res.success = reset();
-        ROS_INFO("Reset Point Cloud");
-        return res.success;
+int PointcloudAccumulator::calculate_adaptive_increment(double add_duration, int adaptive_param){
+    int incr = 0.5 * adaptive_param * (add_duration + 1);
+    if (incr >= 1){
+        return incr;
+    } else{
+        return 1;
     }
-
-    bool PointcloudAccumulator::reset(){
-        kd_tree = new KD_TREE(0.3, 0.6, downsample_resolution);
-
-        PointVector p;
-        PointType pt;
-        pt.x = 0; pt.y = 0; pt.z = 0;
-        p.push_back(pt);
-        kd_tree->Build(p);
-        return true;
 }
-
-    int PointcloudAccumulator::calculate_adaptive_increment(double add_duration, int adaptive_param){
-        int incr = 0.5 * adaptive_param * (add_duration + 1);
-        if (incr >= 1){
-            return incr;
-        } else{
-            return 1;
-        }
-    }
-
 }

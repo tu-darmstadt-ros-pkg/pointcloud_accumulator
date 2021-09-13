@@ -23,8 +23,7 @@ using namespace std;
 
 typedef PointXYZRGBT PointType;
 
-typedef vector<PointType> PointVector;
-
+typedef std::vector<PointType, Eigen::aligned_allocator<PointType> > PointVector;
 const PointType ZeroP;
 
 struct KD_TREE_NODE

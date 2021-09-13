@@ -22,6 +22,7 @@ namespace pointcloud_accumulator
 
     private:
         void callback(const sensor_msgs::PointCloud2::ConstPtr& msg);
+        void constructPclCloud(PointVector points, pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
         bool savePointcloud(pointcloud_accumulator_msgs::SavePointCloud::Request &req,
                             pointcloud_accumulator_msgs::SavePointCloud::Response &res);
         bool resetPointcloud(std_srvs::Trigger::Request  &req,
@@ -52,7 +53,6 @@ namespace pointcloud_accumulator
         KD_TREE* kd_tree;
         tf2_ros::Buffer tfBuffer;
         tf2_ros::TransformListener tfListener;
-
     };
 } // namespace pointcloud_accumulator
 
