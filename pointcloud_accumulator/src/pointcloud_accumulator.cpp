@@ -25,6 +25,7 @@ void PointcloudAccumulator::init(){
     if(use_submaps){
         submap_announcement_sub = nh_.subscribe<cartographer_ros_msgs::StampedSubmapEntry>("submap_announcement", 1, &PointcloudAccumulator::submap_announcements, this);
         submap_update_sub = nh_.subscribe<cartographer_ros_msgs::SubmapList>("submap_list", 1, &PointcloudAccumulator::submap_update, this);
+        static_frame = "world_cartographer";
     }
 
     pub = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB>>("cloud_out", 1, false);
@@ -37,11 +38,12 @@ void PointcloudAccumulator::init(){
 
 void PointcloudAccumulator::callback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 
+    sensor_msgs::PointCloud2Ptr cloud(new sensor_msgs::PointCloud2);
     if(!tfBuffer.canTransform(static_frame, msg->header.frame_id, msg->header.stamp, ros::Duration(0.01))){
         ROS_DEBUG("Can't transform from %s to %s!", msg->header.frame_id.c_str(), static_frame.c_str());
         return;
     }
-    sensor_msgs::PointCloud2Ptr cloud(new sensor_msgs::PointCloud2);
+
     pcl_ros::transformPointCloud(static_frame, *msg, *cloud, tfBuffer);
 
     //Transmit point cloud data to the ikd-tree
@@ -102,6 +104,9 @@ void PointcloudAccumulator::submap_update(const cartographer_ros_msgs::SubmapLis
         for(size_t submap_index = 0; submap_index < msg->submap.size(); submap_index++){
             int internal_index = -1;
             for(size_t j = 0; j < submap_list.size(); j++){
+                if(submap_list.size() == 0 || j == submap_list.size()-1){
+                    break;
+                }
                 if(submap_list[j].submap.submap_index == submap_index){
                     internal_index = j;
                     break;

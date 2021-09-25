@@ -8,7 +8,7 @@
   <arg name="frame" default="world" />
   <arg name="update_rate" default="0.2" />
   <arg name="use_cartographer_submaps" default="false" />
-  
+
   <node pkg="pointcloud_accumulator" type="pointcloud_accumulator_node" name="pointcloud_accumulator_node"
         output="screen" respawn="true" >
     <remap from="cloud_in" to="$(arg cloud_in)" />
@@ -19,5 +19,4 @@
     <param name="use_cartographer_submaps" value="$(arg use_cartographer_submaps)" />
   </node>
 
-  
 </launch>

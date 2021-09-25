@@ -7,8 +7,8 @@
   <arg name="nodelet_manager" default="velodyne_nodelet_manager" />
   <arg name="resolution" default="0.1" />
   <arg name="frame" default="world" />
-  <arg name="update_rate" default="0.5" />
-  <arg name="use_cartographer_submaps" default="true" />
+  <arg name="update_rate" default="0.2" />
+  <arg name="use_cartographer_submaps" default="false" />
     
   <node pkg="nodelet" type="nodelet" name="pointcloud_accumulator_nodelet"
         args="load pointcloud_accumulator/PointcloudAccumulatorNodelet $(arg nodelet_manager)" 

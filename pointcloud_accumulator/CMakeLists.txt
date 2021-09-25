@@ -24,6 +24,8 @@ catkin_package(
         CATKIN_DEPENDS filters nodelet roscpp sensor_msgs rviz pointcloud_accumulator_msgs cartographer_ros_msgs geometry_msgs tf2_geometry_msgs
 )
 
+catkin_add_env_hooks(50.export.pointcloud_accumulator SHELLS bash)
+
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 set(CMAKE_AUTOMOC ON)
