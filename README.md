@@ -17,27 +17,27 @@ In `pointcloud_accumulator/launch/accumulator.launch` several parameters can be 
 * **`cloud_in`** The input point cloud topic.
 * **`cloud_out`** The topic where the downsampled cloud gets published.
 * **`nodelet_manager`** Nodelet manager for the point cloud topic.
-* **`resolution`** The resolution with which the tree gets downsampled, i.e. the length of one voxel.
+* **`resolution`** The resolution with which the tree gets downsampled, i.e. the side length of one voxel.
 * **`frame`** The *static* tf frame into which all points get transformed.
 * **`update_rate`** The rate (in Hz) with which the cloud gets published.
 
 ## Services
 * **`save_pointcloud`** Saves the current state of the point cloud as a `.pcd`-file. Call the service with 
 ```
-rosservice call /pointcloud_accumulator_nodelet/save_pointcloud "<file_path>" "<file_name>"
+rosservice call /pointcloud_accumulator_node/save_pointcloud "<file_path>" "<file_name>"
 ```
 For example
 ```
-rosservice call /pointcloud_accumulator_nodelet/save_pointcloud "$(rospack find pointcloud_accumulator)/saved_clouds" "pc1"
+rosservice call /pointcloud_accumulator_node/save_pointcloud "$(rospack find pointcloud_accumulator)/saved_clouds" "pc1"
 ```
 
 * **`reset_pointcloud`** Resets the accumulated point cloud. Call the service with 
 ```
-rosservice call /pointcloud_accumulator_nodelet/reset_pointcloud
+rosservice call /pointcloud_accumulator_node/reset_pointcloud
 ```
 
 ## Launch
 Launch the nodelet using
 
-```roslaunch pointcloud_accumulator accumulator.launch```
+```roslaunch pointcloud_accumulator node.launch```
 
