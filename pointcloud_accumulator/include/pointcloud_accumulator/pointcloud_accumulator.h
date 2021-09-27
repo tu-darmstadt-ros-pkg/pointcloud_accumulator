@@ -32,12 +32,19 @@ namespace pointcloud_accumulator
         void submap_announcements(const cartographer_ros_msgs::StampedSubmapEntry::ConstPtr& msg);
         void submap_update(const cartographer_ros_msgs::SubmapList::ConstPtr& msg);
 
+        void connectCb();
+        void startSubscribers();
+        void stopSubscribers();
+
         std::string static_frame;
         double downsample_resolution;
         bool use_submaps;
         double add_duration;
         int adaptive_incr;
         std::vector<cartographer_ros_msgs::StampedSubmapEntry> submap_list;
+
+        bool lazy_;
+        bool enabled_;
 
         ros::NodeHandle nh_;
         ros::NodeHandle pnh_;

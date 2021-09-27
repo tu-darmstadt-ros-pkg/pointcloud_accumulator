@@ -10,7 +10,7 @@
 namespace pointcloud_accumulator
 {
 
-PointcloudAccumulator::PointcloudAccumulator(const ros::NodeHandle& nh, const ros::NodeHandle& pnh) : nh_(nh), pnh_(pnh), tfListener(tfBuffer){
+PointcloudAccumulator::PointcloudAccumulator(const ros::NodeHandle& nh, const ros::NodeHandle& pnh) : nh_(nh), pnh_(pnh), tfListener(tfBuffer), lazy_(true){
     pnh.param<double>("downsample_resolution", downsample_resolution, 0.1);
     pnh.param<std::string>("static_frame", static_frame, "odom");
     pnh.param<bool>("use_cartographer_submaps", use_submaps, false);
@@ -21,14 +21,21 @@ PointcloudAccumulator::PointcloudAccumulator(const ros::NodeHandle& nh, const ro
 
 void PointcloudAccumulator::init(){
 
+    enabled_ = !lazy_;
+
+    if (enabled_) {
+        startSubscribers();
+    }
+
+    ros::SubscriberStatusCallback connect_cb = boost::bind(&PointcloudAccumulator::connectCb, this);
+    pub = nh_.advertise<sensor_msgs::PointCloud2>("cloud_out", 1, connect_cb, connect_cb);
+
     sub = nh_.subscribe<sensor_msgs::PointCloud2>("cloud_in", 0, &PointcloudAccumulator::callback, this);
     if(use_submaps){
         submap_announcement_sub = nh_.subscribe<cartographer_ros_msgs::StampedSubmapEntry>("submap_announcement", 1, &PointcloudAccumulator::submap_announcements, this);
         submap_update_sub = nh_.subscribe<cartographer_ros_msgs::SubmapList>("submap_list", 1, &PointcloudAccumulator::submap_update, this);
         static_frame = "world_cartographer";
     }
-
-    pub = nh_.advertise<pcl::PointCloud<pcl::PointXYZRGB>>("cloud_out", 1, false);
 
     save_map_service = pnh_.advertiseService("save_pointcloud", &PointcloudAccumulator::savePointcloud, this);
     reset_map_service = pnh_.advertiseService("reset_pointcloud", &PointcloudAccumulator::resetPointcloud, this);
@@ -38,6 +45,9 @@ void PointcloudAccumulator::init(){
 
 void PointcloudAccumulator::callback(const sensor_msgs::PointCloud2::ConstPtr& msg){
 
+    if (!enabled_){
+        return;
+    }
     sensor_msgs::PointCloud2Ptr cloud(new sensor_msgs::PointCloud2);
     if(!tfBuffer.canTransform(static_frame, msg->header.frame_id, msg->header.stamp, ros::Duration(0.01))){
         ROS_DEBUG("Can't transform from %s to %s!", msg->header.frame_id.c_str(), static_frame.c_str());
@@ -178,7 +188,9 @@ void PointcloudAccumulator::submap_update(const cartographer_ros_msgs::SubmapLis
 
 
 void PointcloudAccumulator::publish_pointcloud(){
-
+    if(!enabled_){
+        return;
+    }
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     PointVector points;
     kd_tree->flatten(kd_tree->Root_Node, points, NOT_RECORD);
@@ -246,4 +258,30 @@ int PointcloudAccumulator::calculate_adaptive_increment(double add_duration, int
         return 1;
     }
 }
+
+void PointcloudAccumulator::connectCb()
+    {
+        if (!lazy_) {
+            return;
+        }
+        if (pub.getNumSubscribers() <= 0) {
+            enabled_ = false;
+            stopSubscribers();
+        } else {
+            if (!enabled_) {
+                enabled_ = true;
+                startSubscribers();
+            }
+        }
+    }
+
+    void PointcloudAccumulator::startSubscribers()
+    {
+        sub = nh_.subscribe<sensor_msgs::PointCloud2>("cloud_in", 0, &PointcloudAccumulator::callback, this);
+    }
+
+    void PointcloudAccumulator::stopSubscribers()
+    {
+        sub.shutdown();
+    }
 }
