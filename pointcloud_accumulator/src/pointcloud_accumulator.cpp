@@ -10,10 +10,11 @@
 namespace pointcloud_accumulator
 {
 
-PointcloudAccumulator::PointcloudAccumulator(const ros::NodeHandle& nh, const ros::NodeHandle& pnh) : nh_(nh), pnh_(pnh), tfListener(tfBuffer), lazy_(true){
+PointcloudAccumulator::PointcloudAccumulator(const ros::NodeHandle& nh, const ros::NodeHandle& pnh) : nh_(nh), pnh_(pnh), tfListener(tfBuffer){
     pnh.param<double>("downsample_resolution", downsample_resolution, 0.1);
     pnh.param<std::string>("static_frame", static_frame, "odom");
     pnh.param<bool>("use_cartographer_submaps", use_submaps, false);
+    pnh.param<bool>("lazy", lazy_, true);
 
     add_duration = 1.0;
     adaptive_incr = 2;

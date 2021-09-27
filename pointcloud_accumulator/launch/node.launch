@@ -8,6 +8,7 @@
   <arg name="frame" default="world" />
   <arg name="update_rate" default="0.2" />
   <arg name="use_cartographer_submaps" default="false" />
+  <arg name="lazy" default="true" />
 
   <node pkg="pointcloud_accumulator" type="pointcloud_accumulator_node" name="pointcloud_accumulator_node"
         output="screen" respawn="true" >
@@ -17,6 +18,7 @@
     <param name="static_frame" value="$(arg frame)" />
     <param name="update_rate" value="$(arg update_rate)" />
     <param name="use_cartographer_submaps" value="$(arg use_cartographer_submaps)" />
+    <param name="lazy" value="$(arg lazy)" />
   </node>
 
 </launch>
