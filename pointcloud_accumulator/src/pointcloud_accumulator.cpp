@@ -3,6 +3,7 @@
 
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
+#include <pcl/io/ply_io.h>
 #include <geometry_msgs/PointStamped.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2/LinearMath/Transform.h>
@@ -223,12 +224,42 @@ bool PointcloudAccumulator::savePointcloud(pointcloud_accumulator_msgs::SavePoin
     kd_tree->flatten(kd_tree->Root_Node, points, NOT_RECORD);
     constructPclCloud(points, cloud);
 
-    std::string file_name = req.file_path + "/" + req.file_name + ".pcd";
     pcl::PCLPointCloud2::Ptr cloud2(new pcl::PCLPointCloud2);
-
     pcl::toPCLPointCloud2(*cloud, *cloud2);
-    pcl::io::savePCDFile(file_name, *cloud2);
-    ROS_INFO("Saved Point Cloud");
+
+
+    std::string file_name = req.file_path + "/" + req.file_name;
+
+    // get file extension
+    std::string file_extension;
+    auto pos = file_name.find_last_of('.');
+    if(pos != std::string::npos)
+    {
+        file_extension = file_name.substr(pos);
+    }
+    else
+    {
+        file_name = file_name + ".pcd";
+        file_extension = ".pcd";
+    }
+
+    // save file
+    if(file_extension == ".ply")
+    {
+        pcl::io::savePLYFile(file_name, *cloud2);
+    }
+    else if(file_extension == ".pcd")
+    {
+        pcl::io::savePCDFile(file_name, *cloud2);
+    }
+    else
+    {
+        ROS_WARN_STREAM("Unknown file extension \"" << file_extension << "\". Use \".pcd\" instead.");
+        file_name = file_name + ".pcd";
+        pcl::io::savePCDFile(file_name, *cloud2);
+    }
+
+    ROS_INFO_STREAM("Saved Point Cloud in file " << file_name);
     res.success = true;
     return res.success;
 }
