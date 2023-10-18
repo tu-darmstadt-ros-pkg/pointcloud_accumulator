@@ -1,15 +1,15 @@
 # Point Cloud Accumulator
 ## Overview
-Nodelet to build an ikd-Tree from incoming PointCloud messages to build a downsampled cloud of the environment.
+ROS Nodelet to build an [ikd-Tree](https://github.com/hku-mars/ikd-Tree) from incoming PointCloud messages to build a downsampled cloud of the environment.
 
 ## Install
-To install just clone
+To install clone the repository in a [ROS workspace](http://wiki.ros.org/catkin/workspaces)
 ```
-git clone git@git.sim.informatik.tu-darmstadt.de:hector/pointcloud_accumulator.git
+git clone https://github.com/tu-darmstadt-ros-pkg/pointcloud_accumulator.git
 ```
 and build
 ```
-hector make pointcloud_accumulator
+catkin build pointcloud_accumulator
 ```
 
 ## Parameters
@@ -43,5 +43,4 @@ Launch the nodelet using
 
 ## Acknowledgement
 
-The project is based on https://github.com/hku-mars/ikd-Tree
-See *Cai, Yixi, Wei Xu, and Fu Zhang. "ikd-tree: An incremental kd tree for robotic applications." arXiv preprint arXiv:2102.10808 (2021).*
+The project is based on [ikd-Tree](https://github.com/hku-mars/ikd-Tree), see the corrsponding paper for details: *Cai, Yixi, Wei Xu, and Fu Zhang. "ikd-tree: An incremental kd tree for robotic applications." arXiv preprint arXiv:2102.10808 (2021).*
