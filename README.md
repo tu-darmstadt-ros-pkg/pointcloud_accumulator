@@ -41,3 +41,7 @@ Launch the nodelet using
 
 ```roslaunch pointcloud_accumulator node.launch```
 
+## Acknowledgement
+
+The project is based on https://github.com/hku-mars/ikd-Tree
+See *Cai, Yixi, Wei Xu, and Fu Zhang. "ikd-tree: An incremental kd tree for robotic applications." arXiv preprint arXiv:2102.10808 (2021).*
