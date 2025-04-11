@@ -1,3 +1,6 @@
+> [!NOTE]
+> This repository is no longer maintained. A ROS2 alternative can be found here: [tu-darmstadt-ros-pkg/hector_pointcloud_tools](https://github.com/tu-darmstadt-ros-pkg/hector_pointcloud_tools)
+
 # Point Cloud Accumulator
 ## Overview
 ROS Nodelet to build an [ikd-Tree](https://github.com/hku-mars/ikd-Tree) from incoming PointCloud messages to build a downsampled cloud of the environment.
